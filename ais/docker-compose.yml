@@ -1,0 +1,88 @@
+version: "3.8"
+
+services:
+  redis:
+    container_name: redis
+    image: redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+  mongo:
+    container_name: mongo
+    image: mongo:4.0.21-xenial
+    ports:
+      - 27017:27017
+    networks:
+      - ais_network
+    volumes:
+      - data:/data/db
+
+  administrator_api:
+    container_name: administrator_api
+    image: difaal21/administrator_api:1.0.0
+    build: .
+    ports:
+      - 5000:5000
+    depends_on:
+      - redis
+    networks:
+      - ais_network
+    environment:
+      - HOST_USER_COMMAND=http://localhost:5001
+      - MYSQL_HOST=localhost
+      - PORT=5000
+      - BASIC_AUTH_USERNAME=root
+      - BASIC_AUTH_PASSWORD=root
+      - BASIC_AUTH_USERNAME_PERSISTENCE=root-persistence
+      - BASIC_AUTH_PASSWORD_PERSISTENCE=root-persistence
+      - PUBLIC_KEY_PATH=public.pem
+      - PRIVATE_KEY_PATH=private.pem
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+    # command: ./node_modules/nodemon/bin/nodemon.js -L app.js
+    command: npm start
+    # stdin_open: true
+    # tty: true
+
+  user_command:
+    container_name: user_command
+    image: difaal21/user_command:1.0.0
+    build: .
+    ports:
+      - 5001:5001
+    depends_on:
+      - redis
+      - administrator_api
+      - mongo
+    networks:
+      - ais_network
+    environment:
+      - APP_NAME=go-template
+      - PORT=5001
+      - BASIC_AUTH_USERNAME=root-persistence
+      - BASIC_AUTH_PASSWORD=root-persistence
+      - MONGODB_URL=mongodb://localhost:27017/ais-user
+      - MONGODB_DATABASE=ais-user
+      - MONGODB_MIN_POOL_SIZE=50
+      - MONGODB_MAX_POOL_SIZE=100
+      - MONGODB_MAX_IDLE_CONNECTION_TIME_MS=10000
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379
+      - REDIS_DATABASE=
+      - REDIS_USERNAME=
+      - REDIS_PASSWORD=
+      - REDIS_SSL_ENABLE=
+    command: go run main.go
+    # stdin_open: true
+    # tty: true
+
+networks:
+  ais_network:
+    name: ais_network
+
+volumes:
+  data:
+    external: true
