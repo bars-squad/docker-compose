@@ -1,0 +1,3 @@
+# ignore all log & data source from image
+/ais/data/
+/ais/log/
