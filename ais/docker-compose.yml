@@ -2,33 +2,71 @@ version: "3.8"
 
 services:
   zookeeper:
-    image: 'bitnami/zookeeper:latest'
-    networks:
-      - ais_network
-    ports:
-      - '2181:2181'
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper
     environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
-
-  kafka:
-    image: 'bitnami/kafka:latest'
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
     networks:
       - ais_network
     volumes:
-      - C:\docker-storage\kafka:/bitnami/kafka
-    ports:
-      - '9092:9092'
+      - C:/docker-storage/zookeeper/data:/var/lib/kafka/data:/var/lib/zookeeper/data
+      - C:/docker-storage/zookeeper/log:/var/lib/zookeeper/log
+
+  kafka:
+    image: confluentinc/cp-kafka
+    container_name: kafka
     depends_on:
       - zookeeper
+    ports:
+      - 29092:29092
     environment:
-      - KAFKA_BROKER_ID=1
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - ALLOW_PLAINTEXT_LISTENER=yes
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181 # Instructs Kafka how to get in touch with ZooKeeper
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092 # Describes how the host name that is advertised and can be reached by clients. The value is published to ZooKeeper for clients to use. The KAFKA_ADVERTISED_LISTENERS variable is set to localhost:29092. This makes Kafka accessible from outside the container by advertising its location on the Docker host.
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - ais_network
+    volumes:
+      - C:/docker-storage/kafka/data:/var/lib/kafka/data
+
+  kafka-connect:
+    container_name: kafka-connect
+    image: confluentinc/cp-kafka-connect
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - 8083:8083
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:9092 # A host:port pair for establishing the initial connection to the Kafka cluster. Multiple bootstrap servers can be used in the form host1:port1,host2:port2,host3:port3....
+      CONNECT_REST_ADVERTISED_HOST_NAME: "localhost" # The hostname that is given out to other workers to connect to. In a Docker environment, your clients must be able to connect to the Connect and other services. Advertised hostname is how Connect gives out a hostname that can be reached by the client.
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: "ais" # A unique string that identifies the Connect cluster group this worker belongs to.
+      CONNECT_CONFIG_STORAGE_TOPIC: "ais-config" # The name of the topic in which to store connector and task configuration data. This must be the same for all workers with the same group.id
+      CONNECT_OFFSET_STORAGE_TOPIC: "ais-offsets" # The name of the topic in which to store offset data for connectors. This must be the same for all workers with the same group.id
+      CONNECT_STATUS_STORAGE_TOPIC: "ais-status" # The name of the topic in which to store state for connectors. This must be the same for all workers with the same group.id
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter" # Converter class for keys. This controls the format of the data that will be written to Kafka for source connectors or read from Kafka for sink connectors.
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter" # Converter class for values. This controls the format of the data that will be written to Kafka for source connectors or read from Kafka for sink connectors.
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_PLUGIN_PATH: /config/connect # The location from which to load Connect plugins in class loading isolation. If using the confluent-hub client, include /usr/share/confluent-hub-components, the default path that confluent-hub installs to.
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+    networks:
+      - ais_network
+    volumes:
+      - type: bind
+        source: ./config/kafka/connect
+        target: /config/connect
 
   redis:
-    container_name: redis
+    container_name: redis-local
     image: redis
     command: redis-server /usr/local/etc/redis/redis.conf
     ports:
@@ -36,7 +74,7 @@ services:
     networks:
       - ais_network
     volumes:
-      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
 
   mongo:
     container_name: mongo
@@ -47,7 +85,7 @@ services:
     networks:
       - ais_network
     volumes:
-      - C:\docker-storage\mongodb\data:/data/db
+      - C:/docker-storage/mongodb/data:/data/db
 
   mongo1:
     container_name: mongo1
@@ -59,6 +97,8 @@ services:
       - ais_network
     depends_on:
       - mongo
+    volumes:
+      - C:/docker-storage/mongodb1/data:/data/db
 
   mongo2:
     container_name: mongo2
@@ -70,6 +110,8 @@ services:
       - ais_network
     depends_on:
       - mongo
+    volumes:
+      - C:/docker-storage/mongodb2/data:/data/db
 
   administrator_api:
     container_name: administrator_api
@@ -93,7 +135,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=
-    command: npm start
+    command: pnpm start
     stdin_open: true
     tty: true
 
@@ -125,7 +167,7 @@ services:
       - REDIS_USERNAME=
       - REDIS_PASSWORD=
       - REDIS_SSL_ENABLE=
-    command: go run main.go
+    command: ./main
     stdin_open: true
     tty: true
 
