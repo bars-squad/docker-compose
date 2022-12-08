@@ -12,7 +12,7 @@ services:
     networks:
       - ais_network
     volumes:
-      - ./data/zookeeper:/var/lib/kafka/data:/var/lib/zookeeper/data
+      - ./data/zookeeper:/var/lib/zookeeper/data
       - ./log/zookeeper:/var/lib/zookeeper/log
 
   kafka:
