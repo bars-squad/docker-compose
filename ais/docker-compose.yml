@@ -85,7 +85,8 @@ services:
     networks:
       - ais_network
     volumes:
-      - C:/docker-storage/mongodb/data:/data/db
+      - ./data/mongodb:/data/db
+      - ./log/mongodb:/var/log/mongodb
 
   mongo1:
     container_name: mongo1
@@ -98,7 +99,8 @@ services:
     depends_on:
       - mongo
     volumes:
-      - C:/docker-storage/mongodb1/data:/data/db
+      - ./data/mongodb1:/data/db
+      - ./log/mongodb1:/var/log/mongodb
 
   mongo2:
     container_name: mongo2
@@ -111,7 +113,8 @@ services:
     depends_on:
       - mongo
     volumes:
-      - C:/docker-storage/mongodb2/data:/data/db
+      - ./data/mongodb2:/data/db
+      - ./log/mongodb2:/var/log/mongodb
 
   administrator_api:
     container_name: administrator_api
