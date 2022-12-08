@@ -12,8 +12,8 @@ services:
     networks:
       - ais_network
     volumes:
-      - C:/docker-storage/zookeeper/data:/var/lib/kafka/data:/var/lib/zookeeper/data
-      - C:/docker-storage/zookeeper/log:/var/lib/zookeeper/log
+      - ./data/zookeeper:/var/lib/kafka/data:/var/lib/zookeeper/data
+      - ./log/zookeeper:/var/lib/zookeeper/log
 
   kafka:
     image: confluentinc/cp-kafka
@@ -32,7 +32,7 @@ services:
     networks:
       - ais_network
     volumes:
-      - C:/docker-storage/kafka/data:/var/lib/kafka/data
+      - ./data/kafka:/var/lib/kafka/data
 
   kafka-connect:
     container_name: kafka-connect
