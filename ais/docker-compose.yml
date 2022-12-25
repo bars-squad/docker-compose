@@ -12,8 +12,8 @@ services:
     networks:
       - ais_network
     volumes:
-      - ./data/zookeeper:/var/lib/zookeeper/data
-      - ./log/zookeeper:/var/lib/zookeeper/log
+      - ../docker-volume/data/zookeeper:/var/lib/zookeeper/data
+      - ../docker-volume/log/zookeeper:/var/lib/zookeeper/log
 
   kafka:
     image: confluentinc/cp-kafka
@@ -32,7 +32,7 @@ services:
     networks:
       - ais_network
     volumes:
-      - ./data/kafka:/var/lib/kafka/data
+      - ../docker-volume/data/kafka:/var/lib/kafka/data
 
   kafka-connect:
     container_name: kafka-connect
@@ -85,8 +85,8 @@ services:
     networks:
       - ais_network
     volumes:
-      - ./data/mongodb:/data/db
-      - ./log/mongodb:/var/log/mongodb
+      - ../docker-volume/data/mongodb:/data/db
+      - ../docker-volume/log/mongodb:/var/log/mongodb
 
   mongo1:
     container_name: mongo1
@@ -99,8 +99,8 @@ services:
     depends_on:
       - mongo
     volumes:
-      - ./data/mongodb1:/data/db
-      - ./log/mongodb1:/var/log/mongodb
+      - ../docker-volume/data/mongodb1:/data/db
+      - ../docker-volume/log/mongodb1:/var/log/mongodb
 
   mongo2:
     container_name: mongo2
@@ -113,8 +113,8 @@ services:
     depends_on:
       - mongo
     volumes:
-      - ./data/mongodb2:/data/db
-      - ./log/mongodb2:/var/log/mongodb
+      - ../docker-volume/data/mongodb2:/data/db
+      - ../docker-volume/log/mongodb2:/var/log/mongodb
 
   administrator_api:
     container_name: administrator_api
@@ -155,7 +155,7 @@ services:
     networks:
       - ais_network
     environment:
-      - APP_NAME=go-template
+      - APP_NAME=user_command
       - PORT=5002
       - BASIC_AUTH_USERNAME=root-persistence
       - BASIC_AUTH_PASSWORD=root-persistence
