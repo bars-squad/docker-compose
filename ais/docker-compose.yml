@@ -180,6 +180,88 @@ services:
     stdin_open: true
     tty: true
 
+  # # Deactive es01, es02, and es03 service if you want to use multi-node elasticsearch (FOR DEVELOPMENT)
+  # es01:
+  #   image: elasticsearch:8.5.3
+  #   volumes:
+  #     # - ./config/certs:/var/lib/elasticsearch/config/certs
+  #     - ../docker-volume/data/es1:/var/lib/elasticsearch/data
+  #     # - ./config/elasticsearch1.yml:/var/lib/elasticsearch/config/elasticsearch.yml
+  #     # - ./config/jvm1.options.d:/var/lib/elasticsearch/config/jvm.options.d
+  #   ports:
+  #     - 9200:9200
+  #   environment:
+  #     - cluster.name=elasticsearch-multi-node
+  #     - node.name=es01
+  #     - discovery.seed_hosts=es02,es03
+  #     - cluster.initial_master_nodes=es01,es02,es03
+  #     - xpack.security.enabled=false # Not recommended for production
+  #     - node.store.allow_mmap=false # Not recommended for production
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # Not recommended for production
+  #   networks:
+  #     - ais_network
+  #   stdin_open: true
+  #   tty: true
+
+  # es02:
+  #   image: elasticsearch:8.5.3
+  #   environment:
+  #     - cluster.name=elasticsearch-multi-node
+  #     - node.name=es02
+  #     - discovery.seed_hosts=es01,es03
+  #     - cluster.initial_master_nodes=es01,es02,es03
+  #     - xpack.security.enabled=false # Not recommended for production
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # Not recommended for production
+  #     - node.store.allow_mmap=false # Not recommended for production
+  #   volumes:
+  #     # - ./config/certs:/var/lib/elasticsearch/config/certs
+  #     - ../docker-volume/data/es2:/var/lib/elasticsearch/data
+  #     # - ./config/elasticsearch2.yml:/var/lib/elasticsearch/config/elasticsearch.yml
+  #     # - ./config/jvm2.options.d:/var/lib/elasticsearch/config/jvm.options.d
+  #   networks:
+  #     - ais_network
+
+  # es03:
+  #   image: elasticsearch:8.5.3
+  #   environment:
+  #     - cluster.name=elasticsearch-multi-node
+  #     - node.name=es03
+  #     - discovery.seed_hosts=es02,es03
+  #     - cluster.initial_master_nodes=es01,es02,es03
+  #     - xpack.security.enabled=false # Not recommended for production
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # Not recommended for production
+  #     - node.store.allow_mmap=false # Not recommended for production
+  #   volumes:
+  #     # - ./config/certs:/var/lib/elasticsearch/config/certs
+  #     - ../docker-volume/data/es2:/var/lib/elasticsearch/data
+  #     # - ./config/elasticsearch3.yml:/var/lib/elasticsearch/config/elasticsearch.yml
+  #     # - ./config/jvm3.options.d:/var/lib/elasticsearch/config/jvm.options.d
+  #   networks:
+  #     - ais_network
+
+  # Active this service if you want to use Single-node elasticsearch (FOR DEVELOPMENT)
+  es01:
+    image: elasticsearch:8.5.3
+    volumes:
+      # - ./config/certs:/var/lib/elasticsearch/config/certs
+      - ../docker-volume/data/es01-sn:/var/lib/elasticsearch/data
+      # - ./config/elasticsearch1.yml:/var/lib/elasticsearch/config/elasticsearch.yml
+      # - ./config/jvm1.options.d:/var/lib/elasticsearch/config/jvm.options.d
+    ports:
+      - 9200:9200
+    environment:
+      - cluster.name=elasticsearch-single-node
+      - node.name=es01
+      - discovery.seed_hosts=es01
+      - discovery.type=single-node
+      - xpack.security.enabled=false # Not recommended for production
+      - node.store.allow_mmap=false # Not recommended for production
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # Not recommended for production
+    networks:
+      - ais_network
+    stdin_open: true
+    tty: true
+
 networks:
   ais_network:
     name: ais_network
